@@ -6,104 +6,53 @@ class MongoApi {
     const MongoClient = require('mongodb').MongoClient;
     const url = 'mongodb://localhost:27017/';
     this.mongoClient = new MongoClient(url, { useNewUrlParser: true });
-    this.mongoRelationalOperators = {
-      '==': '$eq',
-      '>': '$gt',
-      '>=': '$gte',
-      '<': '$lt',
-      '<=': '$lte',
-      '!=': '$ne',
-      'in': '$in',
-      'nin': '$nin'
-    }
-    this.mongoLogicalOperators = {
-      '&&': '%and',
-      '||': '%or'
-    }
   }
 
-  parseFilter(string) {
-    let relOperators      = []
-    let logOperators      = []
-    let values            = []
-    let properties        = []
-    let expressions       = []
-    let charArr           = Array.from(string)
-    let state             = 'property' // property | value
-    let createNewExpression = () => {
-      relOperators.push('')
-      logOperators.push('')
-      properties.push('')
-      values.push('')
-    }
-    createNewExpression()
-    for(let i in charArr) {
-      if (charArr[i] === ' ') {
-        if (state === 'value' && utils.isLogicalOperator(charArr[i - 1])) {
-          createNewExpression()
-          state = 'property'
-        }
-        continue
-      } else if (!utils.isOperator(charArr[i])) {
-        switch (state) {
-          case 'property':
-            properties[properties.length - 1] += charArr[i]
-            break
-          case 'value':
-            values[values.length - 1] += charArr[i]
-            break
-        }
-      } else if (utils.isLogicalOperator(charArr[i])) {
-        logOperators[logOperators.length - 1] += charArr[i]
-      } else if (utils.isRelationalOperator(charArr[i])) {
-        relOperators[relOperators.length - 1] += charArr[i]
-        state = 'value'
-      }
-    }
-    for (let i in properties.filter(prop => prop != '')) {
-      let mongoRelationalOperator = this.mongoRelationalOperators[relOperators[i]]
-      expressions.push({[properties[i]]: {[mongoRelationalOperator]: values[i]}})
-    }
-    if (expressions.length === 1) {
-      return expressions[0]
-    } else if (expressions.length > 1) {
-      return {[this.mongoLogicalOperators[logOperators[0]]]: expressions}
-    } else {
-      return {error: 'something is wrong!'}
-    }
-  }
+  /**
+   * Доступ к объектам базы
+   * 
+   * @param {Object} options: 
+   * options.databaseName - обязательный параметр
+   * options.collectionName - обязательный параметр
+   * options.id - необязательный параметр
+   * options.filter - необязательный параметр
+   * 
+   */
 
-  /* 
-    FETCH OPTIONS:
-    {
-      databaseName (required)
-      collectionName (required),
-      filter (optional),
-      id (optional)
-    }
-  */
   fetch (options) {
     if (options.collectionName === undefined || options.databaseName === undefined) {
       return {error: 'no collectionName or databaseName name!'}
     }
     const {databaseName, collectionName, filter, id} = options
-    let collection = this.mongoClient.db(databaseName).collection(collectionName)
-    let result
-
+    const collection = this.mongoClient.db(databaseName).collection(collectionName)
     if (filter === undefined && id === undefined) { // всю коллекцию
-      result = collection.find().toArray()
+      return collection.find().toArray()
     } else if (filter === undefined && id !== undefined) { // по id
-      result = collection.find({_id: id}).toArray()[0] === undefined ? {error: 'element not found'} : collection.find({_id: id}).toArray()[0]
+      return collection.find({_id: id}).toArray()[0] === undefined ? {error: 'element not found'} : collection.find({_id: id}).toArray()[0]
     } else if (filter !== undefined && id === undefined) { // по фильтру
-      try {
-        result = collection.func(this.parseFilter(filter))
-      } catch(e) {
-        return {error: e.message}
-      }
+      return collection.find(filter).toArray()
     } else {
-      result = {error: 'cannot use fetch by id and filter at the same time!'}
+      return {error: 'cannot use fetch by id and filter at the same time!'}
     }
-    return result
+  }
+
+  /**
+   * Обновление базы
+   * @param {Object} options
+   * options.databaseName - обязательный параметр
+   * options.collectionName - обязательный параметр
+   * options.values - обязательный параметр
+   * options.id - необязательный параметр
+   * 
+   *  
+   * @param {Object} options 
+   */
+  update (options) {
+    if (options.collectionName === undefined || options.databaseName === undefined) {
+      return {error: 'no collectionName or databaseName name!'}
+    }
+    const {databaseName, collectionName, values, id} = options
+    const collection = this.mongoClient.db(databaseName).collection(collectionName)
   }
 }
 
