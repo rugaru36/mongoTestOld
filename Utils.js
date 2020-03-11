@@ -1,6 +1,7 @@
 class Utils {
   isOperator (char) {
-    char.toLowerCase() != char.toUpperCase() || isNaN(char)
+    const operators = ['&', '|','=', '>', '<', '!']
+    return Boolean(operators.indexOf(char) + 1) 
   }
   isRelationalOperator (char) {
     const operators = ['=', '>', '<', '!']

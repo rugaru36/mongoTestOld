@@ -18,47 +18,64 @@ class MongoApi {
     }
     this.mongoLogicalOperators = {
       '&&': '%and',
-      '||': '%or',
-      'not': '$not'
+      '||': '%or'
     }
   }
 
   parseFilter(string) {
-    let charArray = Array.from(string)
-    let property = ''
-    let operator = ''
-    let value = ''
-    let state = 'property'
-    let mongoOperator
-    
-    for(let i in charArray) {
-      switch (state) {
-        case 'property':
-          if (charArray[i] === ' ') {
-            state = 'operator'
-          } else {
-            property += charArray[i]
-          }
-          break
-        case 'operator':
-          if (charArray[i] === ' ') {
-            state = 'value'
-          } else {
-            operator += charArray[i]
-          }
-          break
-        case 'value':
-          if (charArray[i] === '\'' || charArray[i] === '\'') {
-            continue
-          } else {
-            value += charArray[i]
-          }
-          break
+    let relOperators      = []
+    let logOperators      = []
+    let values            = []
+    let properties        = []
+    let expressions       = []
+    let charArr           = Array.from(string)
+    let state             = 'property' // property | value
+    let createNewExpression = () => {
+      relOperators.push('')
+      logOperators.push('')
+      properties.push('')
+      values.push('')
+    }
+
+    createNewExpression()
+    for(let i in charArr) {
+      if (charArr[i] === ' ') {
+        if (state === 'value') {
+          createNewExpression()
+          state = 'property'
+        }
+        continue
+      } else if (!utils.isOperator(charArr[i])) {
+        switch (state) {
+          case 'property':
+            properties[properties.length - 1] += charArr[i]
+            break
+          case 'value':
+            values[properties.length - 1] += charArr[i]
+            break
+        }
+      } else if (utils.isLogicalOperator(charArr[i])) {
+        if (logOperators.length > 1 && Array.from(logOperators[logOperators.length - 2])[0] === charArr[i]) {
+        }
+        logOperators += charArr[i]
+        state = 'property'
+      } else if (utils.isRelationalOperator(charArr[i])) {
+        relOperators += charArr[i]
+        state = 'value'
       }
     }
-    value = !isNaN(value) ? +value : value
-    mongoOperator = this.mongoRelationalOperators[operator]
-    return {[property]: {[mongoOperator]: value}}
+    for (let i in properties) {
+      let mongoRelationalOperator = this.mongoRelationalOperators[relOperators[i]]
+      let value = !isNaN(values[i]) ? +values[i] : values[i]
+      expressions.push({[properties[i]]: {[mongoRelationalOperator]: value}})
+    }
+    if (expressions.length === 1) {
+      return expressions[0]
+    } else if (expressions.length > 1) {
+
+    } else {
+      return {error: 'something is wrong!'}
+    }
   }
 
   /* 
