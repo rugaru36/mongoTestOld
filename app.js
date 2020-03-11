@@ -1,13 +1,13 @@
 const port        = 80
-const app         = require('express')()
+const express     = require('express')()
 const bodyParser  = require('body-parser')
-const server 		  = require('http').Server(app)
+const server 		  = require('http').Server(express)
 const mongoApi    = require('./Mongo')
 
 server.listen(port, function(){
   console.log(`listening port ${port}!`)
 })
 
-app.all('/test', function(req, res){
+express.all('/test', function(req, res){
   return res.json('test answer!')
 })

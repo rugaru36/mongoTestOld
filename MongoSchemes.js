@@ -8,7 +8,6 @@ const MongoSchemes = {
     },
     phone: String
   }),
-
 }
 
 module.exports = MongoSchemes
