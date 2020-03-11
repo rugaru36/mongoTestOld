@@ -7,7 +7,7 @@ class Utils {
     const operators = ['=', '>', '<', '!']
     return Boolean(operators.indexOf(char) + 1) 
   }
-  isLogicalOperator () {
+  isLogicalOperator (char) {
     const operators = ['&', '|']
     return Boolean(operators.indexOf(char) + 1)
   }
