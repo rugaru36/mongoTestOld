@@ -11,5 +11,3 @@ server.listen(port, function(){
 app.all('/test', function(req, res){
   return res.json('test answer!')
 })
-
-console.log(mongoApi.parseFilter("prop == value && prop == value"))
