@@ -1,7 +1,7 @@
-const Scheme = require ('mongoose').Schema
+const Scheme = require('mongoose').Schema
 
 const MongoSchemes = {
-  'user': new Scheme ({
+  'User': new Scheme ({
     name: {
       firstName: String,
       lastName: String

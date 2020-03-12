@@ -8,6 +8,15 @@ server.listen(port, function(){
   console.log(`listening port ${port}!`)
 })
 
-express.all('/test', function(req, res){
-  return res.json('test answer!')
+express.all('/fetch', async function(req, res) {
+  const {databaseName, modelName, id, filter}
+  let result = await mongoApi.fetch({databaseName, modelName, id, filter})
+  return res.json(result)
 })
+
+express.all('/update', async function(req, res) {
+  const {databaseName, modelName, values, id, filter} = req
+  let result = await mongoApi.update({databaseName, modelName, values, id, filter})
+  return res.json(result)
+})
+
