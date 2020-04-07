@@ -9,7 +9,7 @@ server.listen(port, function(){
 })
 
 express.all('/fetch', async function(req, res) {
-  const {databaseName, modelName, id, filter}
+  const {databaseName, modelName, id, filter} = req
   let result = await mongoApi.fetch({databaseName, modelName, id, filter})
   return res.json(result)
 })
