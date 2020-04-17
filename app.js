@@ -1,4 +1,4 @@
-const port        = 81
+const port        = 80
 const express     = require('express')()
 const bodyParser  = require('body-parser')
 const server 		  = require('http').Server(express)
