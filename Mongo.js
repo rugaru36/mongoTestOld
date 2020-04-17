@@ -88,6 +88,10 @@ class MongoApi {
     }
     return result
   }
+
+  async delete (options) {
+
+  }
 }
 
 module.exports = new MongoApi()
