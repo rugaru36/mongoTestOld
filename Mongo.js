@@ -12,6 +12,23 @@ class MongoApi {
     }
   }
 
+  route(router, options) {
+    try { 
+      switch(router) {
+        case 'update': 
+          return this.update(options)
+        case 'delete':
+          return this.delete(options)
+        case 'fetch':
+          return this.fetch(options)
+        default: 
+          return {error: 'wrong router'}
+      }
+    } catch (e) {
+      return {error: e.message}
+    }
+  }
+
   /**
    * async function
    * 
@@ -25,10 +42,10 @@ class MongoApi {
    * 
   */
   async fetch (options) {
-    if (options.modelName === undefined || options.databaseName === undefined) {
-      return {error: 'no modelName or databaseName provided!'}
-    } else if (mongoSchemes[options.modelName] === undefined) {
-      return {error: `model ${options.modelName} does not exist!`}
+    const mandatoryList = ['databaseName', 'modelName']
+    const checkParametersResult = this.checkParameters(mandatoryList, options)
+    if (checkParametersResult.error) {
+      return checkParametersResult
     }
     let result
     const {databaseName, modelName, filter, id} = options
@@ -63,23 +80,24 @@ class MongoApi {
    *  
   */
   async update (options) {
-    if (options.modelName === undefined || options.databaseName === undefined) {
-      return {error: 'no modelName or databaseName provided!'}
-    } else if (mongoSchemes[options.modelName] === undefined) {
-      return {error: `model ${options.modelName} does not exist!`}
+    const mandatoryList = ['databaseName', 'modelName', 'values']
+    const checkParametersResult = this.checkParameters(mandatoryList, options)
+    if (checkParametersResult.error) {
+      return checkParametersResult
     }
-    let result
     const {databaseName, modelName, values, id, filter} = options
     const Model = mongoose.model(modelName, mongoSchemes[modelName])
+    let result
     try {
       mongoose.connect(`${this.mongoUrl}/${databaseName}`, this.connectionOptions)
       if (id === undefined) {
+        values.isExist = true
+        console.log(values)
         const object = new Model(values)
         result = await object.save()
       } else {
-        const Model = mongoose.model(modelName, mongoSchemes[modelName])
         const query = id !== undefined ? {_id: id} : filter
-        result = await Model.findOneAndUpdate(query, values, {new: true}).exec()
+        result = await Model.updateMany(query, values, {new: true}).exec()
       } 
       mongoose.disconnect() 
     } catch(e) {
@@ -89,8 +107,58 @@ class MongoApi {
     return result
   }
 
+  /**
+   * async function
+   * 
+   * Удаление объектов
+   * @param {Object} options
+   * options.databaseName - обязательный параметр
+   * options.modelName - обязательный параметр
+   * options.id - необязательный параметр
+   * options.filter - необязательный параметр
+   * options.switchIsExist
+   *  
+  */
   async delete (options) {
+    const mandatoryList = ['databaseName', 'modelName']
+    const checkParametersResult = this.checkParameters(mandatoryList, options)
+    if (checkParametersResult.error) {
+      return checkParametersResult
+    }
+    const {databaseName, modelName, id, filter, switchIsExist} = options
+    const Model = mongoose.model(modelName, mongoSchemes[modelName])
+    const query = id !== undefined ? {_id: id} : filter
+    let result
+    if (filter === undefined && id === undefined) {
+      return {error: 'filter or id must be provided!'}
+    }
+    try {
+      mongoose.connect(`${this.mongoUrl}/${databaseName}`, this.connectionOptions)
+      if (switchIsExist) {
+        result = await Model.updateMany(query, {isExist: false}, {new: true}).exec()
+      } else {
+        result = await Model.deleteMany(query, function (err) {
+          console.log(`delete error from mongoose: ${err}`)
+        })
+      }
+      mongoose.disconnect() 
+    } catch(e) {
+      mongoose.disconnect() 
+      return {error: e.message}
+    }
+    return result
+  }
 
+  // Проверка параметров. 
+  // Первый аргумент - массив названий параметров, второй - объект с параметрами
+  checkParameters (mandatoryParameters, options) {
+    let optionsParameters = Object.keys(options)
+    for (let i of mandatoryParameters) {
+      if (optionsParameters.indexOf(i) === -1 || options[i] === undefined) {
+        return {error: `no ${i} found!`}
+      }
+    }
+    return {status: 'success'}
   }
 }
 

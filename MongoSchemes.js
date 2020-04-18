@@ -6,7 +6,8 @@ const MongoSchemes = {
       firstName: String,
       lastName: String
     },
-    phone: String
+    phone: String,
+    isExist: Boolean
   }),
 }
 

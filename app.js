@@ -1,4 +1,4 @@
-const port        = 80
+const port        = 81
 const express     = require('express')()
 const bodyParser  = require('body-parser')
 const server 		  = require('http').Server(express)
@@ -10,15 +10,14 @@ server.listen(port, function(){
   console.log(`listening port ${port}!`)
 })
 
-express.post('/fetch', async function(req, res) {
-  const {databaseName, modelName, id, filter} = req.body
-  let result = await mongoApi.fetch({databaseName, modelName, id, filter})
-  return res.json(result)
-})
-
-express.post('/update', async function(req, res) {
-  const {databaseName, modelName, values, id, filter} = req.body
-  let result = await mongoApi.update({databaseName, modelName, values, id, filter})
+express.post('/database', async function(req, res) {
+  const router = req.body.router
+  let result
+  if (router === undefined) {
+    result = res.json({error: 'no router found!'})
+  } else {
+    result = await mongoApi.route(router, req.body)
+  }
   return res.json(result)
 })
 
