@@ -97,7 +97,7 @@ class MongoApi {
         result = await object.save()
       } else {
         const query = id !== undefined ? {_id: id} : filter
-        result = await Model.updateMany(query, values, {new: true}).exec()
+        result = await Model.updateMany(query, {$set: values}, {new: true}).exec()
       } 
       mongoose.disconnect() 
     } catch(e) {
